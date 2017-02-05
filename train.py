@@ -3,7 +3,7 @@ import random
 
 import numpy as np
 import tensorflow as tf
-from embedding import RandomEmbedding
+from embedding import *
 
 from rnn_text_classifier import RnnTextClassifier
 from sentence import Sentence
@@ -19,7 +19,13 @@ tf.flags.DEFINE_string("summaries_dir", "summary_qc",
 # Model parameters
 tf.flags.DEFINE_integer("rnn_num", 2, "The numbers of rnn cells (default: 2)")
 tf.flags.DEFINE_integer("cell_size", 64, "The size of the rnn cell (default: 64)")
-tf.flags.DEFINE_integer("embedding_size", 128, "The size of the embeddings (default: 128)")
+tf.flags.DEFINE_integer("embedding_size", 128,
+                        "The size of the embeddings; this value is ignored if a pre-trained embedding is used. (default: 128)")
+tf.flags.DEFINE_boolean("train_embedding", False,
+                        "Train or not the embeddings when using pre-trained ones (default: False)")
+tf.flags.DEFINE_string("embedding_path",
+                       "",
+                       "The path of an embedding in word2vec binary format")
 tf.flags.DEFINE_float("dropout_keep_prob", 0.8, "Dropout keep probability (default: 0.8)")
 tf.flags.DEFINE_float("lam", 1, "Regularization parameter (default: 1)")
 
@@ -80,7 +86,7 @@ def build_vocab(dataset):
 
 def build_label_dict(labels):
     ret = dict()
-    i=0
+    i = 0
     for label in labels:
         ret[label] = i
         i += 1
@@ -168,7 +174,12 @@ def train_and_test():
         sess = tf.Session(config=session_conf)
         with sess.as_default():
             print("Initializing Embedding")
-            embedding = RandomEmbedding(len(vocab), FLAGS.embedding_size)
+            embedding = None
+            if FLAGS.embedding_path != "":
+                embedding = Word2VecEmbedding(FLAGS.embedding_path, vocab, FLAGS.train_embedding)
+            else:
+                embedding = RandomEmbedding(len(vocab), FLAGS.embedding_size)
+
             print("Building nn_model")
             model = RnnTextClassifier(batch_size=FLAGS.batch_size, sentence_length=max_length,
                                       embedding=embedding, cell_layer_size=FLAGS.cell_size,
