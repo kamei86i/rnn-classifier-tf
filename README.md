@@ -14,6 +14,7 @@ for example word2vec embeddings). It is expected that using pre-trained word emb
 ## Dependencies
 - Python 3
 - Tensorflow 0.12.1
+- Gensim 0.13.4.1
 
 ## How to train the network
 The network can be trained with the *train.py* script; default parameters are already set in the file.
